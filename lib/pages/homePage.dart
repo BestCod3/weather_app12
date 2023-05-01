@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:weather_app/Data/weatherData.dart';
 import 'package:weather_app/constants/apiKeys/apiKey.dart';
 import 'package:weather_app/pages/searchPage.dart';
 
@@ -17,7 +18,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String cityName = '';
   String country = '';
-  dynamic tempreture;
+  String tempreture = '';
+  String description = '';
+  String icon = '';
   bool isLoading = false;
 
   @override
@@ -48,17 +51,18 @@ class _HomePageState extends State<HomePage> {
   Future<void> getWeather(Position position) async {
     try {
       final client = http.Client();
-
       final url =
           'https://api.openweathermap.org/data/2.5/weather?lat=${position.latitude}&lon=${position.longitude}&appid=${ApiKeys.MyApiKey}';
       Uri uri = Uri.parse(url);
       final result = await client.get(uri);
       final jsonResult = jsonDecode(result.body);
       cityName = jsonResult['name'];
-      tempreture = jsonResult['main']['temp'];
+
       country = jsonResult['sys']['country'];
       final double kelvin = jsonResult['main']['temp'];
-      tempreture = (kelvin - 273.15).toStringAsFixed(0);
+      tempreture = WeatherData.calculateWeather(kelvin);
+      description = WeatherData.getDescription(num.parse(tempreture));
+      icon = WeatherData.getWeatherIcon(num.parse(tempreture));
       // checkDouble(tempereture);
       log('response ===> ${jsonResult['name']}');
       setState(() {
@@ -68,6 +72,7 @@ class _HomePageState extends State<HomePage> {
       // log('response ==> ${result.body}');
       // log('response json ==> ${jsonResult}');
     } catch (e) {
+      log('$e');
       throw Exception(e);
     }
   }
@@ -84,10 +89,14 @@ class _HomePageState extends State<HomePage> {
         cityName = data["name"];
         country = data['sys']['country'];
         final double kelvin = data['main']['temp'];
-        tempreture = (kelvin - 273.15).toStringAsFixed(0);
+        tempreture = WeatherData.calculateWeather(kelvin);
+        description = WeatherData.getDescription(num.parse(tempreture));
+        icon = WeatherData.getWeatherIcon(num.parse(tempreture));
         setState(() {});
       }
-    } catch (e) {}
+    } catch (e) {
+      throw Exception(e);
+    }
   }
 
   Future<Position> _getPosition() async {
@@ -177,10 +186,10 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       Positioned(
                         top: 100,
-                        left: 130,
+                        left: 135,
                         child: Text(
-                          '⛅',
-                          style: TextStyle(fontSize: 60, color: Colors.white),
+                          icon,
+                          style: TextStyle(fontSize: 60),
                         ),
                       ),
                       Positioned(
@@ -203,8 +212,8 @@ class _HomePageState extends State<HomePage> {
                         top: 330,
                         left: 120,
                         child: Text(
-                          'Very cold',
-                          style: TextStyle(fontSize: 60, color: Colors.white),
+                          description,
+                          style: TextStyle(fontSize: 50, color: Colors.white),
                         ),
                         //try как приходить информация находит ошибки итд.
                         //initstate до скаффолда
