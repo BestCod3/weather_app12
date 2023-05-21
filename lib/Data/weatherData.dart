@@ -14,7 +14,7 @@ class WeatherData {
     } else if (temp > 10) {
       return 'Bring a 🧥 \njust in case';
     } else {
-      return 'Really cold or hot';
+      return 'Really cold\n or hot';
     }
   }
 
